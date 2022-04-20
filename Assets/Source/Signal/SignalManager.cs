@@ -4,8 +4,10 @@ public delegate void OnSignalFired();
 
 public class SignalManager : MonoBehaviour
 {
+    public GameObject signalParent;
+
     private float timer = 0;
-    private float targetTime;
+    private float timerLength;
     private bool isTimerRunning = false;
 
     private OnSignalFired callBack;
@@ -13,13 +15,11 @@ public class SignalManager : MonoBehaviour
 
     // MARK: - Lifecycle
 
-    void Awake()
-    {
-        dots = GetComponentsInChildren<SignalDot>();
+    void Awake() {
+        dots = signalParent.GetComponentsInChildren<SignalDot>();
     }
 
-    void Start()
-    {
+    void Start() {
         ResetForNewRound();
     }
 
@@ -27,7 +27,7 @@ public class SignalManager : MonoBehaviour
         if (!isTimerRunning || callBack == null) { return; }
         timer += Time.deltaTime;
 
-        if (timer >= targetTime) {
+        if (timer >= timerLength) {
             SignalFired();
         }
     }
@@ -42,9 +42,9 @@ public class SignalManager : MonoBehaviour
         timer = 0;
     }
 
-    public void StartSignalTimer(float targetTime, OnSignalFired callBack) {
+    public void StartSignalTimer(float timerLength, OnSignalFired callBack) {
         this.callBack = callBack;
-        this.targetTime = targetTime;
+        this.timerLength = timerLength;
 
         SetSignalIsActive(false);
         SetSignalIsVisible(true);

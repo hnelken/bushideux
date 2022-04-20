@@ -1,15 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(UIManager))]
 [RequireComponent(typeof(InputManager))]
+[RequireComponent(typeof(SignalManager))]
 public class RoundManager : MonoBehaviour
 {
     // MARK: - Editor Properties
     public Text reactTimerText;
-    public SignalManager signalManager;
 
     // MARK: - Private Properties
+    private SignalManager signalManager;
     private InputManager inputManager;
+    private UIManager uiManager;
 
     private RoundState roundState = RoundState.OPEN;
 
@@ -30,8 +33,7 @@ public class RoundManager : MonoBehaviour
 
     private void SpacebarPressed() {
         if (roundState == RoundState.READY) {
-            float signalTimer = 3;
-            StartSignalTimer(signalTimer);
+            StartRandomSignalTimer();
         } else if (roundState == RoundState.REACT) {
             // TODO: Finish recording reaction time here
             MoveToNextState();
@@ -43,7 +45,9 @@ public class RoundManager : MonoBehaviour
     // MARK: - Lifecycle
 
     void Awake() {
+        signalManager = GetComponent<SignalManager>();
         inputManager = GetComponent<InputManager>();
+        uiManager = GetComponent<UIManager>();
     }
 
     void Start() {
@@ -87,27 +91,11 @@ public class RoundManager : MonoBehaviour
     }
 
     private void ResetForNewRound() {
+        uiManager.SetOpeningStateUI();
         signalManager.ResetForNewRound();
         roundState = RoundState.OPEN;
         reactTimerText.enabled = false;
         reactTimer = 0;
-    }
-    
-    private void StartSignalTimer(float signalTimer) {
-        if (roundState != RoundState.READY) {
-            LogTools.AssertionFailure("Attempted to start round from invalid state");
-        }
-    
-        signalManager.StartSignalTimer(signalTimer, new OnSignalFired(SignalFired));
-        MoveToNextState();
-    }
-
-    private void SignalFired() {
-        if (roundState != RoundState.WAIT) {
-            LogTools.AssertionFailure("Attempted to fire signal from invalid state");
-        }
-        // TODO: Set reaction period start time here
-        MoveToNextState();
     }
 
     private void MoveToNextState() {
@@ -147,11 +135,24 @@ public class RoundManager : MonoBehaviour
                 reactTimerText.enabled = true;
                 break;
             case RoundState.DECIDE:
-                // TODO: Move characters to result positions
+                uiManager.SetDecisionStateUI();
                 MoveToNextState();
                 break;
             case RoundState.FINISH:
                 break;
         }
+    }
+
+    // MARK: - Signal Logic
+    
+    public void StartRandomSignalTimer() {
+        var randomTime = Random.Range(2, 5);
+        signalManager.StartSignalTimer(randomTime, new OnSignalFired(SignalFired));
+        MoveToNextState();
+    }
+
+    private void SignalFired() {
+        // TODO: Set reaction period start time here
+        MoveToNextState();
     }
 }
